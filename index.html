@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>就上充 Token · chongtoken.com</title>
+<meta name="description" content="AI 罢工没 Token？就上 chongtoken.com，立刻满血续航！">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04060d;
+    --bg-2: #070b16;
+    --cyan: #22d3ee;
+    --cyan-soft: #67e8f9;
+    --magenta: #f472b6;
+    --green: #4ade80;
+    --text: #eaf2fb;
+    --muted: #8b98ad;
+    --line: rgba(103, 232, 249, 0.14);
+    --font-display: 'Chakra Petch', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', 'Menlo', monospace;
+    --font-cn: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: var(--font-display);
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---------- 背景层 ---------- */
+  .bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 120% 80% at 50% -10%, #0b1428 0%, transparent 60%),
+      var(--bg);
+  }
+
+  /* 字符雨 */
+  #rain {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  /* 网格 */
+  .grid {
+    position: fixed;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 46px 46px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 40%, #000 20%, transparent 80%);
+  }
+
+  /* 光晕 blobs */
+  .blob {
+    position: fixed;
+    z-index: 3;
+    pointer-events: none;
+    border-radius: 50%;
+    filter: blur(90px);
+    opacity: 0.5;
+    will-change: transform;
+  }
+  .blob.a {
+    width: 520px; height: 520px;
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.28), transparent 70%);
+    top: -140px; left: -120px;
+    animation: float1 18s ease-in-out infinite;
+  }
+  .blob.b {
+    width: 460px; height: 460px;
+    background: radial-gradient(circle, rgba(244, 114, 182, 0.22), transparent 70%);
+    bottom: -160px; right: -120px;
+    animation: float2 22s ease-in-out infinite;
+  }
+  .blob.c {
+    width: 380px; height: 380px;
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.16), transparent 70%);
+    top: 40%; left: 60%;
+    animation: float3 26s ease-in-out infinite;
+  }
+
+  @keyframes float1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(60px, 40px) scale(1.12); }
+  }
+  @keyframes float2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(-50px, -50px) scale(0.92); }
+  }
+  @keyframes float3 {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(-70px, 30px); }
+  }
+
+  /* 暗角 */
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.55) 100%);
+  }
+
+  /* ---------- 内容 ---------- */
+  .stage {
+    position: relative;
+    z-index: 10;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--cyan-soft);
+    padding: 9px 18px;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    border-radius: 999px;
+    background: rgba(34, 211, 238, 0.06);
+    box-shadow: 0 0 24px rgba(34, 211, 238, 0.12), inset 0 0 14px rgba(34, 211, 238, 0.08);
+    animation: reveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .badge .dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+
+  .hero {
+    margin: 34px 0 10px;
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+  }
+  .hero .line {
+    display: block;
+    font-size: clamp(44px, 9vw, 104px);
+    animation: reveal 1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .hero .line:first-child { animation-delay: 0.15s; }
+  .hero .line:last-child { animation-delay: 0.3s; }
+
+  .cn { font-family: var(--font-cn); color: var(--text); }
+  .tok {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-shadow:
+      0 0 12px rgba(34, 211, 238, 0.7),
+      0 0 36px rgba(34, 211, 238, 0.4),
+      0 0 80px rgba(34, 211, 238, 0.25);
+  }
+  .charge {
+    font-family: var(--font-cn);
+    color: var(--magenta);
+    text-shadow:
+      0 0 12px rgba(244, 114, 182, 0.7),
+      0 0 36px rgba(244, 114, 182, 0.4),
+      0 0 80px rgba(244, 114, 182, 0.25);
+  }
+
+  .slogan {
+    margin-top: 30px;
+    font-family: var(--font-cn);
+    font-size: clamp(16px, 2.6vw, 22px);
+    font-weight: 600;
+    line-height: 1.7;
+    color: var(--text);
+    max-width: 720px;
+    animation: reveal 1s 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .slogan .tok {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-shadow: 0 0 12px rgba(34, 211, 238, 0.7);
+  }
+  .slogan a {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--cyan-soft);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 14px rgba(34, 211, 238, 0.45);
+    border-bottom: 1px dashed rgba(103, 232, 249, 0.5);
+    transition: color 0.2s ease;
+  }
+  .slogan a:hover { color: #fff; border-bottom-color: #fff; }
+
+  .tagline {
+    font-family: var(--font-mono);
+    font-size: clamp(13px, 1.6vw, 16px);
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    max-width: 640px;
+    animation: reveal 1s 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .tagline .bar { color: rgba(34,211,238,0.5); padding: 0 6px; }
+
+  .cta {
+    margin-top: 40px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    color: #051018;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    padding: 16px 34px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan-soft));
+    box-shadow: 0 0 0 1px rgba(34,211,238,0.4), 0 8px 40px rgba(34,211,238,0.35);
+    font-weight: 700;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    animation: reveal 1s 0.75s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .cta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 1px rgba(34,211,238,0.6), 0 14px 50px rgba(34,211,238,0.5);
+  }
+
+  @keyframes reveal {
+    from { opacity: 0; transform: translateY(28px); filter: blur(8px); }
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+  }
+
+  /* ---------- 底部联系 ---------- */
+  .contact {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    padding: 0 24px 48px;
+    display: flex;
+    justify-content: center;
+    animation: reveal 1s 0.8s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  }
+  .contact-card {
+    max-width: 720px;
+    width: 100%;
+    text-align: center;
+    padding: 26px 28px;
+    border-radius: 16px;
+    background: rgba(10, 16, 30, 0.6);
+    border: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    position: relative;
+    overflow: hidden;
+  }
+  .contact-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 30%, rgba(34,211,238,0.06) 50%, transparent 70%);
+    pointer-events: none;
+  }
+  .contact-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  .contact-body {
+    font-family: var(--font-cn);
+    font-size: clamp(15px, 2.2vw, 18px);
+    line-height: 1.8;
+    color: #dbe6f2;
+  }
+  .contact-body a {
+    color: var(--cyan-soft);
+    font-family: var(--font-mono);
+    font-weight: 700;
+    text-decoration: none;
+    font-size: 1.08em;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 14px rgba(34, 211, 238, 0.45);
+    border-bottom: 1px dashed rgba(103, 232, 249, 0.5);
+    transition: color 0.2s ease;
+  }
+  .contact-body a:hover { color: #fff; border-bottom-color: #fff; }
+  .contact-body .wx {
+    color: var(--green);
+    margin-left: 8px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  footer {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 20px 24px 28px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: rgba(139, 152, 173, 0.6);
+  }
+
+  /* ---------- 联系弹窗 ---------- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal[hidden] { display: none; }
+  .modal-mask {
+    position: absolute;
+    inset: 0;
+    background: rgba(2, 4, 10, 0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .modal-card {
+    position: relative;
+    width: 100%;
+    max-width: 460px;
+    text-align: center;
+    padding: 38px 32px 32px;
+    border-radius: 18px;
+    background: rgba(10, 16, 30, 0.94);
+    border: 1px solid var(--line);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 44px rgba(34, 211, 238, 0.12);
+    animation: modalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    background: rgba(139, 152, 173, 0.12);
+    color: var(--muted);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+  .modal-close:hover { color: #fff; background: rgba(139, 152, 173, 0.28); }
+  .modal-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .modal-email {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: clamp(20px, 5vw, 26px);
+    color: var(--cyan-soft);
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 16px rgba(34, 211, 238, 0.45);
+    word-break: break-all;
+  }
+  .modal-tip {
+    font-family: var(--font-cn);
+    font-size: 15px;
+    line-height: 1.7;
+    color: #dbe6f2;
+    margin: 14px 0 26px;
+  }
+  .modal-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .modal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+  .modal-btn.primary {
+    background: linear-gradient(135deg, var(--cyan), var(--cyan-soft));
+    color: #051018;
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.4), 0 8px 30px rgba(34, 211, 238, 0.3);
+  }
+  .modal-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.6), 0 14px 40px rgba(34, 211, 238, 0.45);
+  }
+  .modal-btn.ghost {
+    background: rgba(34, 211, 238, 0.06);
+    color: var(--cyan-soft);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+  }
+  .modal-btn.ghost:hover { background: rgba(34, 211, 238, 0.14); color: #fff; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; }
+    .blob, #rain { display: none; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="bg"></div>
+  <canvas id="rain" aria-hidden="true"></canvas>
+  <div class="grid"></div>
+  <div class="blob a"></div>
+  <div class="blob b"></div>
+  <div class="blob c"></div>
+  <div class="vignette"></div>
+
+  <main class="stage">
+    <div class="badge"><span class="dot"></span>API TOKEN · 精品域名</div>
+
+    <h1 class="hero">
+      <span class="line"><span class="tok">token</span><span class="cn"> 不够用？</span></span>
+      <span class="line"><span class="cn">就上 </span><span class="charge">充</span><span class="tok">token</span></span>
+    </h1>
+
+    <p class="slogan">AI 罢工没 <span class="tok">Token</span>？就上 <a href="https://chongtoken.com" target="_blank" rel="noopener">chongtoken.com</a>，立刻满血续航！</p>
+
+    <p class="tagline">高性能 API Token 即时充值 <span class="bar">/</span> 稳定调用 <span class="bar">/</span> 精品域名待售</p>
+
+    <button class="cta" id="contactBtn" type="button">立即联系 →</button>
+  </main>
+
+  <section class="contact">
+    <div class="contact-card">
+      <div class="contact-label">Contact</div>
+      <div class="contact-body">
+        对域名感兴趣的来访者，请点击上方「立即联系」按钮联系我们，注明来意
+      </div>
+    </div>
+  </section>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-mask"></div>
+    <div class="modal-card">
+      <button class="modal-close" id="modalClose" type="button" aria-label="关闭">×</button>
+      <div class="modal-label">商务合作 · BUSINESS CONTACT</div>
+      <div class="modal-email">qiyi@chongtoken.com</div>
+      <p class="modal-tip">如您对域名或相关业务有意向，请发送邮件至企业邮箱，我们将在收到后尽快与您联系。</p>
+      <div class="modal-actions">
+        <a class="modal-btn primary" href="mailto:qiyi@chongtoken.com">发送邮件</a>
+        <button class="modal-btn ghost" id="copyEmail" type="button">复制邮箱地址</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>TOKEN · DOMAIN · 7×24</footer>
+
+<script>
+  (function () {
+    var canvas = document.getElementById('rain');
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var chars = '0123456789ABCDEF<>/{}[]$#%=+';
+    var cols, drops, fontSize = 16;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cols = Math.floor(canvas.width / fontSize);
+      drops = [];
+      for (var i = 0; i < cols; i++) {
+        drops[i] = Math.random() * -100;
+      }
+    }
+    resize();
+
+    function draw() {
+      ctx.fillStyle = 'rgba(4, 6, 13, 0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.font = fontSize + 'px "JetBrains Mono", monospace';
+      for (var i = 0; i < cols; i++) {
+        var ch = chars[Math.floor(Math.random() * chars.length)];
+        var x = i * fontSize;
+        var y = drops[i] * fontSize;
+
+        var roll = Math.random();
+        if (roll < 0.04) {
+          ctx.fillStyle = 'rgba(244, 114, 182, 0.85)';
+        } else if (roll < 0.1) {
+          ctx.fillStyle = 'rgba(74, 222, 128, 0.75)';
+        } else {
+          ctx.fillStyle = 'rgba(103, 232, 249, 0.6)';
+        }
+        ctx.fillText(ch, x, y);
+
+        if (y > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+
+    function loop() {
+      draw();
+      if (!reduce) {
+        requestAnimationFrame(loop);
+      }
+    }
+    loop();
+
+    var t;
+    window.addEventListener('resize', function () {
+      clearTimeout(t);
+      t = setTimeout(resize, 200);
+    });
+  })();
+</script>
+<script>
+  (function () {
+    var email = 'qiyi@chongtoken.com';
+    var modal = document.getElementById('modal');
+    var contactBtn = document.getElementById('contactBtn');
+    var closeBtn = document.getElementById('modalClose');
+    var copyBtn = document.getElementById('copyEmail');
+
+    function openModal() { modal.hidden = false; }
+    function closeModal() { modal.hidden = true; }
+
+    contactBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal || e.target.classList.contains('modal-mask')) closeModal();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    function copyDone() {
+      copyBtn.textContent = '已复制 ✓';
+      setTimeout(function () { copyBtn.textContent = '复制邮箱地址'; }, 2000);
+    }
+    function fallbackCopy() {
+      var ta = document.createElement('textarea');
+      ta.value = email;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); copyDone(); } catch (err) {}
+      document.body.removeChild(ta);
+    }
+    copyBtn.addEventListener('click', function () {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(copyDone).catch(fallbackCopy);
+      } else {
+        fallbackCopy();
+      }
+    });
+  })();
+</script>
+</body>
+</html>
